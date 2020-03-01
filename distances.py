@@ -1,6 +1,10 @@
 import requests, json, datetime, random
 from SPARQLWrapper import SPARQLWrapper, JSON
 
+def rev_lats(lats):
+  tmp = lats.split(',')
+  return tmp[1] + "," + tmp[0]
+
 # WikiData query
 
 sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
@@ -74,3 +78,6 @@ if data:
 
         print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
 
+        erantzuna = "https://map.project-osrm.org/?loc={}&loc={}".format(rev_lats(point1), rev_lats(point2))
+
+        print(erantzuna)
