@@ -1,8 +1,9 @@
-import requests, json, datetime, random
+import requests, json, datetime, random, time
 from SPARQLWrapper import SPARQLWrapper, JSON
-from staticmap import StaticMap, Line, CircleMarker
+from staticmap import StaticMap, Line, CircleMarker, IconMarker
+from PIL import Image, ImageDraw, ImageFont
 
-MAX_REQUESTS = 5
+MAX_REQUESTS = 20
 
 def rev_lats(lats):
   tmp = lats.split(',')
@@ -15,6 +16,23 @@ def point_to_coordinates(point):
 def get_queryString(file):
   with open(file, "r") as f:
     return f.read()
+
+def generate_label(text):
+  path = "./labels"
+  font_path = '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf'
+
+  img = Image.new('RGBA', (800, 100))
+  fnt = ImageFont.truetype(font_path, 35)
+  d = ImageDraw.Draw(img)
+  d.text((0,0), text, fill=(0,0,0), font=fnt)
+  
+  fname = text.replace(" ", "_")
+  full_path = path + fname + ".png"
+
+  img.save(full_path)
+
+  return full_path
+
 
 # WikiData query, only execute once
 def query_cities():
@@ -80,45 +98,63 @@ def draw_map(point1, point2, file_path):
   image.save(file_path)
   print("map created")
 
+
+def osrm_query(point1, point2):
+  url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
+  print(url)
+
+  response = requests.get(url)
+  data = response.json()
+
+  if data:
+    i=1
+    completed = False
+    while not completed:
+      try:
+        distance = data["routes"][0]["legs"][0]["distance"]
+        duration = int(data["routes"][0]["legs"][0]["duration"])
+        completed = True
+      except:
+        response = requests.get(url)
+        data = response.json()
+        print("Attempting to request router.project-osrm.org...")
+        print("Number of attempts: {}".format(i))
+      i+=1
+      time.sleep(2)
+
+    return distance, duration
+
+
 # Project osrm query 
 # comprobar que no sean iguales
 
 def get_distance(point1, point2):
+  distance, duration = osrm_query(point1, point2)
 
-  url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
-  print(url)
-  response = requests.get(url)
+  if distance and duration:
+    print("Distantzia: " + str(distance/1000))
+    print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
 
-  data = response.json()
+    case = random.randrange(0,2,1)
+    
+    if case == 0: # 2 azpitik
+      alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
+      alternative2 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
 
-  if data:
-      #error control
-      distance = data["routes"][0]["legs"][0]["distance"]
-      duration = int(data["routes"][0]["legs"][0]["duration"])
-      if distance and duration:
-          print("Distantzia: " + str(distance/1000))
-          print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
+    if case == 1: # 1 azpitik, 1 gainetik
+      alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
+      alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
 
-          case = random.randrange(0,2,1)
-          
-          if case == 0: # 2 azpitik
-            alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
-            alternative2 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
+    else: # 2 gainetik
+      alternative1 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
+      alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
 
-          if case == 1: # 1 azpitik, 1 gainetik
-            alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
-            alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
+    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
 
-          else: # 2 gainetik
-            alternative1 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
-            alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
+    #cambiar  a url de osm
+    erantzuna = "https://map.project-osrm.org/?loc={}&loc={}".format(rev_lats(point1), rev_lats(point2))
 
-          print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
-
-          #cambiar  a url de osm
-          erantzuna = "https://map.project-osrm.org/?loc={}&loc={}".format(rev_lats(point1), rev_lats(point2))
-
-          print(erantzuna)
+    print(erantzuna)
 
 
 if __name__ == "__main__":
