@@ -1,12 +1,16 @@
 import requests, json, datetime, random
 from SPARQLWrapper import SPARQLWrapper, JSON
+from staticmap import StaticMap, Line, CircleMarker
 
 MAX_REQUESTS = 5
-uri = "https://query.wikidata.org/sparql"
 
 def rev_lats(lats):
   tmp = lats.split(',')
   return tmp[1] + "," + tmp[0]
+
+def point_to_coordinates(point):
+  parts = point.split(",")
+  return tuple([float(x) for x in parts])
 
 def get_queryString(file):
   with open(file, "r") as f:
@@ -14,12 +18,17 @@ def get_queryString(file):
 
 # WikiData query, only execute once
 def query_cities():
+  uri = "https://query.wikidata.org/sparql"
+  query_path = "query.rq"
+  
+  query = get_queryString(query_path)
+
   sparql = SPARQLWrapper(uri)
-  query = get_queryString("query.rq")
   sparql.setQuery(query)
   sparql.setReturnFormat(JSON)
   results = sparql.query().convert()
   bindings = results["results"]["bindings"]
+
   return bindings
 
 def get_random_node(bindings):
@@ -45,6 +54,31 @@ def get_different_points(bindings):
 
   return [point1, point2]
 
+
+def draw_map(point1, point2, file_path):
+  url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+  map_height = 500
+  map_width = 500
+
+  m = StaticMap(map_height, map_width, url_template=url_template)
+
+  coords1 = point_to_coordinates(point1)
+  coords2 = point_to_coordinates(point2)
+
+  marker_outline1 = CircleMarker(coords1, 'white', 18)
+  marker1 = CircleMarker(coords1, '#0036FF', 12)
+  m.add_marker(marker_outline1)
+  m.add_marker(marker1)
+
+  marker_outline2 = CircleMarker(coords2, 'white', 18)
+  marker2 = CircleMarker(coords2, '#0036FF', 12)
+  m.add_marker(marker_outline2)
+  m.add_marker(marker2)
+
+  image = m.render(zoom=9)
+
+  image.save(file_path)
+  print("map created")
 
 # Project osrm query 
 # comprobar que no sean iguales
@@ -81,6 +115,7 @@ def get_distance(point1, point2):
 
           print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
 
+          #cambiar  a url de osm
           erantzuna = "https://map.project-osrm.org/?loc={}&loc={}".format(rev_lats(point1), rev_lats(point2))
 
           print(erantzuna)
@@ -90,3 +125,4 @@ if __name__ == "__main__":
   bindings = query_cities()
   points = get_different_points(bindings)
   get_distance(points[0], points[1])
+  draw_map(points[0], points[1], "test.png")
