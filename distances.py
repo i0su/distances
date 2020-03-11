@@ -124,6 +124,26 @@ def osrm_query(point1, point2):
 
     return distance, duration
 
+def wrong_distances(distance):
+  min_proportion = 0.1
+  max_proportion = 0.2
+
+  case = random.randrange(0,3)
+  if case == 0: # 2 azpitik
+    alternative1 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative2 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+
+  if case == 1: # 1 azpitik, 1 gainetik
+    alternative1 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative2 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+
+  else: # 2 gainetik
+    alternative1 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative2 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+
+
+  return alternative1, alternative2
+
 
 # Project osrm query 
 # comprobar que no sean iguales
@@ -135,24 +155,15 @@ def get_distance(point1, point2):
     print("Distantzia: " + str(distance/1000))
     print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
 
-    case = random.randrange(0,2,1)
-    
-    if case == 0: # 2 azpitik
-      alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
-      alternative2 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
-
-    if case == 1: # 1 azpitik, 1 gainetik
-      alternative1 = distance - random.randrange(int(distance*0.05), int(distance*0.2), 2)
-      alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
-
-    else: # 2 gainetik
-      alternative1 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
-      alternative2 = distance + random.randrange(int(distance*0.05), int(distance*0.2), 2)
+    alternative1, alternative2 = wrong_distances(distance)
 
     print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
 
+    while distance == alternative1 or distance == alternative2 or alternative1 == alternative2:
+      alternative1, alternative2 = wrong_distances(distance)
+
     #cambiar  a url de osm
-    erantzuna = "https://map.project-osrm.org/?loc={}&loc={}".format(rev_lats(point1), rev_lats(point2))
+    erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(point1), rev_lats(point2))
 
     print(erantzuna)
 
@@ -161,4 +172,4 @@ if __name__ == "__main__":
   bindings = query_cities()
   points = get_different_points(bindings)
   get_distance(points[0], points[1])
-  draw_map(points[0], points[1], "test.png")
+  draw_map(points[0], points[1], "map.png")
