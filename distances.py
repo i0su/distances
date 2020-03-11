@@ -2,38 +2,24 @@ import requests, json, datetime, random
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 MAX_REQUESTS = 5
+uri = "https://query.wikidata.org/sparql"
 
 def rev_lats(lats):
   tmp = lats.split(',')
   return tmp[1] + "," + tmp[0]
 
+def get_queryString(file):
+  with open(file, "r") as f:
+    return f.read()
+
 # WikiData query, only execute once
 def query_cities():
-  sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-
-  # Current query: https://w.wiki/JQc
-  # poner variable en el codigo de basque country para que se pueda cambiar?
-  sparql.setQuery("""
-  SELECT ?any ?anyLabel ?koord WHERE {
-    SERVICE wikibase:label { bd:serviceParam wikibase:language "eu,en". }
-    VALUES ?town_or_city {
-      wd:Q3957
-      wd:Q515
-      wd:Q532
-      wd:Q543654
-    }
-    ?any (wdt:P31) ?town_or_city;
-      (wdt:P131/(wdt:P131*)/^wdt:P527) wd:Q47588.
-    ?any wdt:P625 ?koord 
-  }
-  GROUP BY ?any ?anyLabel ?koord
-  ORDER BY ?anyLabel
-  """)
+  sparql = SPARQLWrapper(uri)
+  query = get_queryString("query.rq")
+  sparql.setQuery(query)
   sparql.setReturnFormat(JSON)
   results = sparql.query().convert()
-
   bindings = results["results"]["bindings"]
-  
   return bindings
 
 def get_random_node(bindings):

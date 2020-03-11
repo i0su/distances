@@ -1,0 +1,14 @@
+SELECT ?any ?anyLabel ?koord WHERE {
+SERVICE wikibase:label { bd:serviceParam wikibase:language "eu,en". }
+VALUES ?town_or_city {
+    wd:Q3957
+    wd:Q515
+    wd:Q532
+    wd:Q543654
+}
+?any (wdt:P31) ?town_or_city;
+    (wdt:P131/(wdt:P131*)/^wdt:P527) wd:Q47588.
+?any wdt:P625 ?koord 
+}
+GROUP BY ?any ?anyLabel ?koord
+ORDER BY ?anyLabel
