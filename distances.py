@@ -1,6 +1,8 @@
 import requests, json, datetime, random
 from SPARQLWrapper import SPARQLWrapper, JSON
 
+MAX_REQUESTS = 5
+
 def rev_lats(lats):
   tmp = lats.split(',')
   return tmp[1] + "," + tmp[0]
@@ -34,30 +36,28 @@ def query_cities():
   
   return bindings
 
-# maybe can divide in two functions (one to get single point and another to get both different)
+def get_random_node(bindings):
+  max_index = len(bindings)
+  index = random.randrange(0,max_index,1)
+  return bindings[index]
 
-def get_points(bindings, max_attempts):
-  maxValue = len(bindings)
+def node_to_point(node):
+  return node["koord"]["value"][6:-1].replace(" ", ",")
 
-  if maxValue:
+def get_different_points(bindings):
+  node1 = get_random_node(bindings)
+  node2 = get_random_node(bindings)
 
-    for _ in (0,max_attempts):
+  while node1["any"]["value"] == node2["any"]["value"]:
+    node1 = get_random_node(bindings)
+    node2 = get_random_node(bindings)
+  
+  point1 = node_to_point(node1)
+  point2 = node_to_point(node2)
 
-      first = random.randrange(0,maxValue,1)
-      node1 = bindings[first]
-
-      second = random.randrange(0,maxValue,1)
-      node2 = bindings[second]
-
-      if node1["any"]["value"] != node2["any"]["value"]:
-        point1 = node1["koord"]["value"][6:-1].replace(" ", ",") # [6:-1] para quitar el 'Point(....)'
-        point2 = node2["koord"]["value"][6:-1].replace(" ", ",")
-        print("point1: {}, point2: {}".format(point1, point2))
-        break
+  print("point1: {}, point2: {}".format(point1, point2))
 
   return [point1, point2]
-
-
 
 
 # Project osrm query 
@@ -72,6 +72,7 @@ def get_distance(point1, point2):
   data = response.json()
 
   if data:
+      #error control
       distance = data["routes"][0]["legs"][0]["distance"]
       duration = int(data["routes"][0]["legs"][0]["duration"])
       if distance and duration:
@@ -101,5 +102,5 @@ def get_distance(point1, point2):
 
 if __name__ == "__main__":
   bindings = query_cities()
-  points = get_points(bindings, 3)
+  points = get_different_points(bindings)
   get_distance(points[0], points[1])
