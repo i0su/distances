@@ -1,9 +1,10 @@
-import requests, json, datetime, random, time
+import requests, json, datetime, random, time, csv
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
 
 MAX_REQUESTS = 20
+csv_file = "distances.csv"
 
 def rev_lats(lats):
   tmp = lats.split(',')
@@ -61,7 +62,7 @@ def get_different_points(bindings):
   node1 = get_random_node(bindings)
   node2 = get_random_node(bindings)
 
-  while node1["any"]["value"] == node2["any"]["value"]:
+  while node1["any"]["value"] == node2["any"]["value"] or not is_valid_node(node1) or not is_valid_node(node2):
     node1 = get_random_node(bindings)
     node2 = get_random_node(bindings)
   
@@ -72,11 +73,13 @@ def get_different_points(bindings):
 
   return [point1, point2]
 
+def is_valid_node(node):
+  return node["anyLabel"]["value"][0] != "Q"
 
 def draw_map(point1, point2, file_path):
   url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-  map_height = 500
-  map_width = 500
+  map_height = 600
+  map_width = 600
 
   m = StaticMap(map_height, map_width, url_template=url_template)
 
@@ -141,23 +144,28 @@ def wrong_distances(distance):
     alternative1 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
     alternative2 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
 
-
   return alternative1, alternative2
 
 
+def format_distance(distance):
+  return int(distance/1000)
+
+
 # Project osrm query 
-# comprobar que no sean iguales
 
 def get_distance(point1, point2):
   distance, duration = osrm_query(point1, point2)
 
   if distance and duration:
-    print("Distantzia: " + str(distance/1000))
-    print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
+    #print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
 
     alternative1, alternative2 = wrong_distances(distance)
 
-    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(int(distance/1000), int(alternative1/1000), int(alternative2/1000)))
+    distance = format_distance(distance)
+    alternative1 = format_distance(alternative1)
+    alternative2 = format_distance(alternative2)
+
+    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative1, alternative2))
 
     while distance == alternative1 or distance == alternative2 or alternative1 == alternative2:
       alternative1, alternative2 = wrong_distances(distance)
@@ -166,6 +174,14 @@ def get_distance(point1, point2):
     erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(point1), rev_lats(point2))
 
     print(erantzuna)
+
+def write_response(correct, incorrect1, incorrect2, url):
+  with open (csv_file, "w") as file:
+    fieldnames = ['Mota', 'Galdera', 'Irudia', 'Zuzena', 'Oker1', 'Oker2', 'Jatorria', 'Esteka']
+    response_writer = csv.writer(file, delimiter=";", lineterminator=";;")
+    response_writer.writerow(fieldnames)
+
+
 
 
 if __name__ == "__main__":
