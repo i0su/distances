@@ -1,10 +1,9 @@
-import requests, json, datetime, random, time, csv
+import requests, json, datetime, random, time, csv, os, uuid
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
 
 MAX_REQUESTS = 20
-csv_file = "distances.csv"
 
 def rev_lats(lats):
   tmp = lats.split(',')
@@ -68,18 +67,24 @@ def get_different_points(bindings):
   
   point1 = node_to_point(node1)
   point2 = node_to_point(node2)
+  label1 = get_label(node1)
+  label2 = get_label(node2)
 
   print("point1: {}, point2: {}".format(point1, point2))
 
-  return [point1, point2]
+  return (label1, point1), (label2, point2)
 
 def is_valid_node(node):
   return node["anyLabel"]["value"][0] != "Q"
 
-def draw_map(point1, point2, file_path):
+def get_label(node):
+  return node["anyLabel"]["value"]
+
+def draw_map(point1, point2):
   url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
   map_height = 600
   map_width = 600
+  fName = str(uuid.uuid4().hex)
 
   m = StaticMap(map_height, map_width, url_template=url_template)
 
@@ -98,9 +103,10 @@ def draw_map(point1, point2, file_path):
 
   image = m.render(zoom=9)
 
-  image.save(file_path)
+  image.save("./maps/" + fName + ".png")
   print("map created")
 
+  return fName
 
 def osrm_query(point1, point2):
   url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
@@ -153,8 +159,8 @@ def format_distance(distance):
 
 # Project osrm query 
 
-def get_distance(point1, point2):
-  distance, duration = osrm_query(point1, point2)
+def get_distance(location1, location2):
+  distance, duration = osrm_query(location1[1], location2[1])
 
   if distance and duration:
     #print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
@@ -165,27 +171,31 @@ def get_distance(point1, point2):
     alternative1 = format_distance(alternative1)
     alternative2 = format_distance(alternative2)
 
+    print("Zer distantzia dago {} eta {}ren artean?".format(location1[0], location2[0]))
     print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative1, alternative2))
 
     while distance == alternative1 or distance == alternative2 or alternative1 == alternative2:
       alternative1, alternative2 = wrong_distances(distance)
 
-    #cambiar  a url de osm
-    erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(point1), rev_lats(point2))
-
+    erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(location1[1]), rev_lats(location2[1]))
     print(erantzuna)
 
-def write_response(correct, incorrect1, incorrect2, url):
-  with open (csv_file, "w") as file:
+    return distance, alternative1, alternative2, erantzuna
+
+def write_response(label1, label2, img_path, correct, incorrect1, incorrect2, url, file_path):
+  with open (file_path, "a") as file:
     fieldnames = ['Mota', 'Galdera', 'Irudia', 'Zuzena', 'Oker1', 'Oker2', 'Jatorria', 'Esteka']
-    response_writer = csv.writer(file, delimiter=";", lineterminator=";;")
-    response_writer.writerow(fieldnames)
-
-
+    response_writer = csv.writer(file, delimiter=";", lineterminator=";;\n")
+    if os.stat(file_path).st_size == 0:
+      response_writer.writerow(fieldnames)
+    question = "Zer distantzia dago {} eta {}ren artean?".format(label1, label2)
+    line = ["Distantziak", question, img_path, correct, incorrect1, incorrect2, "OpenStreetMap", url]
+    response_writer.writerow(line)
 
 
 if __name__ == "__main__":
   bindings = query_cities()
-  points = get_different_points(bindings)
-  get_distance(points[0], points[1])
-  draw_map(points[0], points[1], "map.png")
+  location1, location2 = get_different_points(bindings)
+  distance, alternative1, alternative2, url = get_distance(location1, location2)
+  fname = draw_map(location1[1], location2[1])
+  write_response(location1[0], location2[0], fname, distance, alternative1, alternative2, url, "distances.csv")
