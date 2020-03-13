@@ -101,12 +101,12 @@ def draw_map(point1, point2):
   m.add_marker(marker_outline2)
   m.add_marker(marker2)
 
-  image = m.render(zoom=9)
+  image = m.render(zoom=8)
 
   image.save("./maps/" + fName + ".png")
   print("map created")
 
-  return fName
+  return fName+".png"
 
 def osrm_query(point1, point2):
   url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
@@ -192,10 +192,27 @@ def write_response(label1, label2, img_path, correct, incorrect1, incorrect2, ur
     line = ["Distantziak", question, img_path, correct, incorrect1, incorrect2, "OpenStreetMap", url]
     response_writer.writerow(line)
 
-
-if __name__ == "__main__":
+def generate_n_questions(n):
+  start_time = time.time()
+  print("Generating {} questions...".format(n))
   bindings = query_cities()
-  location1, location2 = get_different_points(bindings)
-  distance, alternative1, alternative2, url = get_distance(location1, location2)
-  fname = draw_map(location1[1], location2[1])
-  write_response(location1[0], location2[0], fname, distance, alternative1, alternative2, url, "distances.csv")
+  print("Cities and Towns queried ")
+
+  for i in range(1,n+1):
+    location1, location2 = get_different_points(bindings)
+    distance, alternative1, alternative2, url = get_distance(location1, location2)
+    fname = draw_map(location1[1], location2[1])
+    write_response(location1[0], location2[0], fname, distance, alternative1, alternative2, url, "distances.csv")
+    print("Question generated")
+    print("Number of generated questions: {} \n".format(i))
+
+  exec_time = time.time() - start_time
+  m, s = divmod(exec_time, 60)
+  h, m = divmod(m, 60)  
+  return "{}:{}:{}".format(int(h), int(m), int(s))
+  
+if __name__ == "__main__":
+  NUM_QUESTIONS = 50
+  exec_time = generate_n_questions(NUM_QUESTIONS)
+  print("Execution ended.")
+  print("Execution time generating {} questions: {}".format(NUM_QUESTIONS, exec_time))
