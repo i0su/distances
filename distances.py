@@ -1,4 +1,4 @@
-import requests, json, datetime, random, time, csv, os, uuid
+import requests, random, time, csv, os, uuid
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
@@ -68,7 +68,7 @@ def get_different_points(bindings):
   label1 = get_label(node1)
   label2 = get_label(node2)
 
-  print("point1: {}, point2: {}".format(point1, point2))
+  #print("point1: {}, point2: {}".format(point1, point2))
 
   return (label1, point1), (label2, point2)
 
@@ -102,13 +102,13 @@ def draw_map(point1, point2):
   image = m.render(zoom=8)
 
   image.save("./maps/" + fName + ".png")
-  print("map created")
+  #print("map created")
 
   return fName+".png"
 
 def osrm_query(point1, point2):
   url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
-  print(url)
+  #print(url)
 
   response = requests.get(url)
   data = response.json()
@@ -124,8 +124,8 @@ def osrm_query(point1, point2):
       except:
         response = requests.get(url)
         data = response.json()
-        print("Attempting to request router.project-osrm.org...")
-        print("Number of attempts: {}".format(i))
+        #print("Attempting to request router.project-osrm.org...")
+        #print("Number of attempts: {}".format(i))
       i+=1
       time.sleep(2)
 
@@ -133,7 +133,7 @@ def osrm_query(point1, point2):
 
 def wrong_answers(answer):
   min_proportion = 0.1
-  max_proportion = 0.2
+  max_proportion = 0.3
 
   case = random.randrange(0,3)
   if case == 0: # 2 azpitik
@@ -162,13 +162,12 @@ def format_duration(minutes):
     return "{} minutu".format(minutes)
 
     
-# Project osrm query 
+# Divide into 2 functions?
 
 def get_distance(location1, location2):
   distance, duration = osrm_query(location1[1], location2[1])
 
   if distance and duration:
-    #print("Iraupena: " + str(datetime.timedelta(seconds=duration))) 
 
     # Get two alternative distances
     alternative_distance1, alternative_distance2 = wrong_answers(distance)
@@ -177,9 +176,10 @@ def get_distance(location1, location2):
     alternative_distance1 = format_distance(alternative_distance1)
     alternative_distance2 = format_distance(alternative_distance2)
 
-    print("Zer distantzia dago {} eta {}ren artean?".format(location1[0], location2[0]))
-    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative_distance1, alternative_distance2))
+    #print("Zer distantzia dago {} eta {}ren artean?".format(location1[0], location2[0]))
+    #print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative_distance1, alternative_distance2))
 
+    #into a function?
     while distance == alternative_distance1 or distance == alternative_distance2 or alternative_distance1 == alternative_distance2:
       alternative_distance1, alternative_distance2 = wrong_answers(distance)
 
@@ -194,11 +194,11 @@ def get_distance(location1, location2):
     alternative_duration1 = format_duration(alternative_duration1)
     alternative_duration2 = format_duration(alternative_duration2)
 
-    print("Zenbat denbora dago kotxez {} eta {}ren artean?".format(location1[0], location2[0]))
-    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(duration, alternative_duration1, alternative_duration2))
+    #print("Zenbat denbora dago kotxez {} eta {}ren artean?".format(location1[0], location2[0]))
+    #print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(duration, alternative_duration1, alternative_duration2))
 
     erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(location1[1]), rev_lats(location2[1]))
-    print(erantzuna)
+    #print(erantzuna)
 
     return distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, erantzuna
 
@@ -231,26 +231,33 @@ def generate_n_questions(n):
   durations_file = "durations.csv"
 
   start_time = time.time()
-  print("Generating {} questions...".format(n))
+  print("Hasiera. {} galdera sortzen...\n".format(n))
   bindings = query_cities()
-  print("Cities and Towns queried ")
 
-  for i in range(1,n+1):
-    location1, location2 = get_different_points(bindings)
-    distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
-    fname = draw_map(location1[1], location2[1])
-    write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
-    write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
-    print("Question generated")
-    print("Number of generated questions: {} \n".format(i))
+  if bindings:
+    print("Hiri eta herrien querya egin da.\n")
+
+    for i in range(1,n+1):
+      location1, location2 = get_different_points(bindings)
+      distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
+      fname = draw_map(location1[1], location2[1])
+      write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
+      write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
+      print("Galdera zuzen sortu da.")
+      print("Orain arte sortutako galdera kopurua: {} \n".format(i))
+
+  else:
+    print("Errorea wikidata zerbitzariarekin konektazerakoan.")
 
   exec_time = time.time() - start_time
   m, s = divmod(exec_time, 60)
   h, m = divmod(m, 60)  
+
+  print("Galderen sorrera amaitu da.")
+
   return "{}:{}:{}".format(int(h), int(m), int(s))
   
 if __name__ == "__main__":
-  NUM_QUESTIONS = 50
+  NUM_QUESTIONS = 5
   exec_time = generate_n_questions(NUM_QUESTIONS)
-  print("Execution ended.")
-  print("Execution time generating {} questions: {}".format(NUM_QUESTIONS, exec_time))
+  print("Exekuzio denbora {} galdera sortzeko: {}".format(NUM_QUESTIONS, exec_time))
