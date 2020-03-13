@@ -3,8 +3,6 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
 
-MAX_REQUESTS = 20
-
 def rev_lats(lats):
   tmp = lats.split(',')
   return tmp[1] + "," + tmp[0]
@@ -133,22 +131,22 @@ def osrm_query(point1, point2):
 
     return distance, duration
 
-def wrong_distances(distance):
+def wrong_answers(answer):
   min_proportion = 0.1
   max_proportion = 0.2
 
   case = random.randrange(0,3)
   if case == 0: # 2 azpitik
-    alternative1 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
-    alternative2 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+    alternative2 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
 
   if case == 1: # 1 azpitik, 1 gainetik
-    alternative1 = distance - random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
-    alternative2 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+    alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
 
   else: # 2 gainetik
-    alternative1 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
-    alternative2 = distance + random.randrange(int(distance*min_proportion), int(distance*max_proportion), 2)
+    alternative1 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+    alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
 
   return alternative1, alternative2
 
@@ -156,43 +154,82 @@ def wrong_distances(distance):
 def format_distance(distance):
   return int(distance/1000)
 
+def format_duration(minutes):
+  hours, minutes = divmod(minutes, 60)
+  if hours:
+    return  "{} ordu eta {} minutu".format(hours, minutes)
+  else:
+    return "{} minutu".format(minutes)
 
+    
 # Project osrm query 
 
 def get_distance(location1, location2):
   distance, duration = osrm_query(location1[1], location2[1])
 
   if distance and duration:
-    #print("Iraupena: " + str(datetime.timedelta(seconds=duration)))
+    #print("Iraupena: " + str(datetime.timedelta(seconds=duration))) 
 
-    alternative1, alternative2 = wrong_distances(distance)
+    # Get two alternative distances
+    alternative_distance1, alternative_distance2 = wrong_answers(distance)
 
     distance = format_distance(distance)
-    alternative1 = format_distance(alternative1)
-    alternative2 = format_distance(alternative2)
+    alternative_distance1 = format_distance(alternative_distance1)
+    alternative_distance2 = format_distance(alternative_distance2)
 
     print("Zer distantzia dago {} eta {}ren artean?".format(location1[0], location2[0]))
-    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative1, alternative2))
+    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative_distance1, alternative_distance2))
 
-    while distance == alternative1 or distance == alternative2 or alternative1 == alternative2:
-      alternative1, alternative2 = wrong_distances(distance)
+    while distance == alternative_distance1 or distance == alternative_distance2 or alternative_distance1 == alternative_distance2:
+      alternative_distance1, alternative_distance2 = wrong_answers(distance)
+
+    # Get two alternative durations
+    duration = int(duration/60)
+    alternative_duration1, alternative_duration2 = wrong_answers(duration)
+
+    while duration == alternative_duration1 or distance == alternative_duration2 or alternative_duration1 == alternative_duration2:
+      alternative_duration1, alternative_duration2 = wrong_answers(duration)
+
+    duration = format_duration(duration)
+    alternative_duration1 = format_duration(alternative_duration1)
+    alternative_duration2 = format_duration(alternative_duration2)
+
+    print("Zenbat denbora dago kotxez {} eta {}ren artean?".format(location1[0], location2[0]))
+    print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(duration, alternative_duration1, alternative_duration2))
 
     erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(location1[1]), rev_lats(location2[1]))
     print(erantzuna)
 
-    return distance, alternative1, alternative2, erantzuna
+    return distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, erantzuna
 
-def write_response(label1, label2, img_path, correct, incorrect1, incorrect2, url, file_path):
+def write_response(question_type, label1, label2, img_path, correct, incorrect1, incorrect2, url, file_path):
+  distance_question = "Zer distantzia dago {} eta {}ren artean?"
+  duration_question = "Zenbat denbora behar da {}tik {}ra kotxez joateko?"
+  source = "OpenStreetMap"
+  distance_type = "Distantziak"
+  duration_type = "Iraupenak"
+
   with open (file_path, "a") as file:
     fieldnames = ['Mota', 'Galdera', 'Irudia', 'Zuzena', 'Oker1', 'Oker2', 'Jatorria', 'Esteka']
     response_writer = csv.writer(file, delimiter=";", lineterminator=";;\n")
+
     if os.stat(file_path).st_size == 0:
       response_writer.writerow(fieldnames)
-    question = "Zer distantzia dago {} eta {}ren artean?".format(label1, label2)
-    line = ["Distantziak", question, img_path, correct, incorrect1, incorrect2, "OpenStreetMap", url]
-    response_writer.writerow(line)
+
+    if question_type == "d":
+      question = distance_question.format(label1, label2)
+      actual_type = distance_type 
+    if question_type == "t":
+      question = duration_question.format(label1, label2)
+      actual_type = duration_type
+
+    row = [actual_type, question, img_path, correct, incorrect1, incorrect2, source, url]
+    response_writer.writerow(row)
 
 def generate_n_questions(n):
+  distances_file = "distances.csv"
+  durations_file = "durations.csv"
+
   start_time = time.time()
   print("Generating {} questions...".format(n))
   bindings = query_cities()
@@ -200,9 +237,10 @@ def generate_n_questions(n):
 
   for i in range(1,n+1):
     location1, location2 = get_different_points(bindings)
-    distance, alternative1, alternative2, url = get_distance(location1, location2)
+    distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
     fname = draw_map(location1[1], location2[1])
-    write_response(location1[0], location2[0], fname, distance, alternative1, alternative2, url, "distances.csv")
+    write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
+    write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
     print("Question generated")
     print("Number of generated questions: {} \n".format(i))
 
