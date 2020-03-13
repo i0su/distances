@@ -1,4 +1,4 @@
-import requests, random, time, csv, os, uuid
+import requests, random, time, csv, os, uuid, progressbar
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
@@ -236,15 +236,15 @@ def generate_n_questions(n):
 
   if bindings:
     print("Hiri eta herrien querya egin da.\n")
-
-    for i in range(1,n+1):
+    
+    for i in progressbar.progressbar(range(1,n+1)):
       location1, location2 = get_different_points(bindings)
       distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
       fname = draw_map(location1[1], location2[1])
       write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
       write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
-      print("Galdera zuzen sortu da.")
-      print("Orain arte sortutako galdera kopurua: {} \n".format(i))
+      #print("Galdera zuzen sortu da.")
+      #print("Orain arte sortutako galdera kopurua: {} \n".format(i))
 
   else:
     print("Errorea wikidata zerbitzariarekin konektazerakoan.")
@@ -258,6 +258,6 @@ def generate_n_questions(n):
   return "{}:{}:{}".format(int(h), int(m), int(s))
   
 if __name__ == "__main__":
-  NUM_QUESTIONS = 5
+  NUM_QUESTIONS = 20
   exec_time = generate_n_questions(NUM_QUESTIONS)
   print("Exekuzio denbora {} galdera sortzeko: {}".format(NUM_QUESTIONS, exec_time))
