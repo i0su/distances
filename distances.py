@@ -1,6 +1,7 @@
-import requests, random, time, csv, os, uuid, progressbar, sys
+import requests, random, time, csv, os, uuid, sys
+import progressbar
 from SPARQLWrapper import SPARQLWrapper, JSON
-from staticmap import StaticMap, Line, CircleMarker, IconMarker
+from staticmap import StaticMap, CircleMarker
 from PIL import Image, ImageDraw, ImageFont
 
 def rev_lats(lats):
@@ -271,7 +272,7 @@ if __name__ == "__main__":
   if len(sys.argv) != 2 or not sys.argv[1].isdigit():
     print("Erabilera: <programaren_izena> <galdera_kopurua>")
     exit()
-    
+
   try:
     NUM_QUESTIONS = int(sys.argv[1])
     exec_time = generate_n_questions(NUM_QUESTIONS)
