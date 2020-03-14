@@ -135,18 +135,22 @@ def wrong_answers(answer):
   min_proportion = 0.1
   max_proportion = 0.3
 
-  case = random.randrange(0,3)
-  if case == 0: # 2 azpitik
-    alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
-    alternative2 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+  try:
+    case = random.randrange(0,3)
+    if case == 0: # 2 azpitik
+      alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+      alternative2 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
 
-  if case == 1: # 1 azpitik, 1 gainetik
-    alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
-    alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+    if case == 1: # 1 azpitik, 1 gainetik
+      alternative1 = answer - random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+      alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
 
-  else: # 2 gainetik
-    alternative1 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
-    alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+    else: # 2 gainetik
+      alternative1 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+      alternative2 = answer + random.randrange(int(answer*min_proportion), int(answer*max_proportion), 2)
+  
+  except:
+    return wrong_answers(answer)
 
   return alternative1, alternative2
 
@@ -235,9 +239,9 @@ def generate_n_questions(n):
   bindings = query_cities()
 
   if bindings:
-    print("Hiri eta herrien querya egin da.\n")
+    #print("Hiri eta herrien querya egin da.\n")
     
-    for i in progressbar.progressbar(range(1,n+1)):
+    for _ in progressbar.progressbar(range(n)):
       location1, location2 = get_different_points(bindings)
       distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
       fname = draw_map(location1[1], location2[1])
@@ -253,11 +257,11 @@ def generate_n_questions(n):
   m, s = divmod(exec_time, 60)
   h, m = divmod(m, 60)  
 
-  print("Galderen sorrera amaitu da.")
+  print("\nGalderen sorrera amaitu da.")
 
   return "{}:{}:{}".format(int(h), int(m), int(s))
   
 if __name__ == "__main__":
-  NUM_QUESTIONS = 20
+  NUM_QUESTIONS = 200
   exec_time = generate_n_questions(NUM_QUESTIONS)
   print("Exekuzio denbora {} galdera sortzeko: {}".format(NUM_QUESTIONS, exec_time))
