@@ -1,4 +1,4 @@
-import requests, random, time, csv, os, uuid, progressbar
+import requests, random, time, csv, os, uuid, progressbar, sys
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, Line, CircleMarker, IconMarker
 from PIL import Image, ImageDraw, ImageFont
@@ -15,6 +15,7 @@ def get_queryString(file):
   with open(file, "r") as f:
     return f.read()
 
+"""
 def generate_label(text):
   path = "./labels"
   font_path = '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf'
@@ -30,9 +31,9 @@ def generate_label(text):
   img.save(full_path)
 
   return full_path
+"""
 
-
-# WikiData query, only execute once
+# query_path fitxategiko querya wikidata zerbitzarira egin
 def query_cities():
   uri = "https://query.wikidata.org/sparql"
   query_path = "query.rq"
@@ -46,6 +47,7 @@ def query_cities():
   bindings = results["results"]["bindings"]
 
   return bindings
+
 
 def get_random_node(bindings):
   max_index = len(bindings)
@@ -79,9 +81,13 @@ def get_label(node):
   return node["anyLabel"]["value"]
 
 def draw_map(point1, point2):
-  url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+  url_template = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+  #url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png" # alternatiba_1
+  #url_template = "http://tile.memomaps.de/tilegen/{z}/{x}/{y}.png" # alternatiba_2
+  
   map_height = 600
   map_width = 600
+  z = 9
   fName = str(uuid.uuid4().hex)
 
   m = StaticMap(map_height, map_width, url_template=url_template)
@@ -99,16 +105,14 @@ def draw_map(point1, point2):
   m.add_marker(marker_outline2)
   m.add_marker(marker2)
 
-  image = m.render(zoom=8)
-
+  image = m.render(zoom=z)
   image.save("./maps/" + fName + ".png")
-  #print("map created")
 
   return fName+".png"
 
+# Emandako puntuen arteko distantzia eta iraupena lortu url web-zerbitzutik
 def osrm_query(point1, point2):
   url = "http://router.project-osrm.org/route/v1/driving/" + point1 + ";" + point2
-  #print(url)
 
   response = requests.get(url)
   data = response.json()
@@ -124,13 +128,13 @@ def osrm_query(point1, point2):
       except:
         response = requests.get(url)
         data = response.json()
-        #print("Attempting to request router.project-osrm.org...")
-        #print("Number of attempts: {}".format(i))
       i+=1
       time.sleep(2)
 
     return distance, duration
 
+# Emandako answer erantzun zuzenarentzat bi erantzun oker lortu
+# Erantzun okerrak zuzenarekiko proportzionalak dira
 def wrong_answers(answer):
   min_proportion = 0.1
   max_proportion = 0.3
@@ -165,30 +169,25 @@ def format_duration(minutes):
   else:
     return "{} minutu".format(minutes)
 
-    
-# Divide into 2 functions?
-
-def get_distance(location1, location2):
+# Emandako kokapenen arteko distantzia eta iraupena lortu, eta hauei dagozkien erantzun okerrak
+def get_distance_duration(location1, location2):
   distance, duration = osrm_query(location1[1], location2[1])
 
   if distance and duration:
 
-    # Get two alternative distances
+    # Bi distantzia oker lortu
     alternative_distance1, alternative_distance2 = wrong_answers(distance)
 
     distance = format_distance(distance)
     alternative_distance1 = format_distance(alternative_distance1)
     alternative_distance2 = format_distance(alternative_distance2)
 
-    #print("Zer distantzia dago {} eta {}ren artean?".format(location1[0], location2[0]))
-    #print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(distance, alternative_distance1, alternative_distance2))
-
-    #into a function?
     while distance == alternative_distance1 or distance == alternative_distance2 or alternative_distance1 == alternative_distance2:
       alternative_distance1, alternative_distance2 = wrong_answers(distance)
 
-    # Get two alternative durations
     duration = int(duration/60)
+
+    # Bi iraupen oker lortu
     alternative_duration1, alternative_duration2 = wrong_answers(duration)
 
     while duration == alternative_duration1 or distance == alternative_duration2 or alternative_duration1 == alternative_duration2:
@@ -198,35 +197,41 @@ def get_distance(location1, location2):
     alternative_duration1 = format_duration(alternative_duration1)
     alternative_duration2 = format_duration(alternative_duration2)
 
-    #print("Zenbat denbora dago kotxez {} eta {}ren artean?".format(location1[0], location2[0]))
-    #print("dist_zuzena: {}; dist_okerra1: {}; dist_okerra2:{}".format(duration, alternative_duration1, alternative_duration2))
-
+    # Erantzunaren URLa lortu
     erantzuna = "https://www.openstreetmap.org/directions?route={}%3B{}".format(rev_lats(location1[1]), rev_lats(location2[1]))
-    #print(erantzuna)
 
     return distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, erantzuna
 
+# Emandako datuak file_path fitxategian gorde
 def write_response(question_type, label1, label2, img_path, correct, incorrect1, incorrect2, url, file_path):
-  distance_question = "Zer distantzia dago {} eta {}ren artean?"
+  distance_question = "Zer distantzia dago kotxez {} eta {}ren artean?"
   duration_question = "Zenbat denbora behar da {}tik {}ra kotxez joateko?"
   source = "OpenStreetMap"
   distance_type = "Distantziak"
   duration_type = "Iraupenak"
 
   with open (file_path, "a") as file:
+    # Fitxategiaren goiburua
     fieldnames = ['Mota', 'Galdera', 'Irudia', 'Zuzena', 'Oker1', 'Oker2', 'Jatorria', 'Esteka']
+
+    # Fitxategiko ilaren formatua definitu
     response_writer = csv.writer(file, delimiter=";", lineterminator=";;\n")
 
+    # Fitxategia hutsik baldin badago, goiburua gehitu
     if os.stat(file_path).st_size == 0:
       response_writer.writerow(fieldnames)
-
+    
+    # Distantziak idazteko deitua izan bada
     if question_type == "d":
       question = distance_question.format(label1, label2)
       actual_type = distance_type 
+    
+    # Iraupenak idazteko deitua izan bada
     if question_type == "t":
       question = duration_question.format(label1, label2)
       actual_type = duration_type
 
+    # Ilara sortu dagokien datuekin, eta fitxategian idatzi
     row = [actual_type, question, img_path, correct, incorrect1, incorrect2, source, url]
     response_writer.writerow(row)
 
@@ -236,23 +241,24 @@ def generate_n_questions(n):
 
   start_time = time.time()
   print("Hasiera. {} galdera sortzen...\n".format(n))
+
+  # Wikidata zerbitzaritik datuak lortu
   bindings = query_cities()
 
   if bindings:
-    #print("Hiri eta herrien querya egin da.\n")
     
+    # Eskatutako galdera kopurua sortzeko begizta 
     for _ in progressbar.progressbar(range(n)):
       location1, location2 = get_different_points(bindings)
-      distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance(location1, location2)
+      distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance_duration(location1, location2)
       fname = draw_map(location1[1], location2[1])
       write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
       write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
-      #print("Galdera zuzen sortu da.")
-      #print("Orain arte sortutako galdera kopurua: {} \n".format(i))
 
   else:
     print("Errorea wikidata zerbitzariarekin konektazerakoan.")
 
+  # Exekuzio-denbora lortu eta formatua eman
   exec_time = time.time() - start_time
   m, s = divmod(exec_time, 60)
   h, m = divmod(m, 60)  
@@ -262,6 +268,16 @@ def generate_n_questions(n):
   return "{}:{}:{}".format(int(h), int(m), int(s))
   
 if __name__ == "__main__":
-  NUM_QUESTIONS = 200
-  exec_time = generate_n_questions(NUM_QUESTIONS)
-  print("Exekuzio denbora {} galdera sortzeko: {}".format(NUM_QUESTIONS, exec_time))
+  if len(sys.argv) != 2 or not sys.argv[1].isdigit():
+    print("Erabilera: <programaren_izena> <galdera_kopurua>")
+    exit()
+    
+  try:
+    NUM_QUESTIONS = int(sys.argv[1])
+    exec_time = generate_n_questions(NUM_QUESTIONS)
+    print("Exekuzio denbora {} galdera sortzeko: {}".format(NUM_QUESTIONS, exec_time))
+
+  except Exception as e:
+    print("Errore bat egon da exekuzioan:")
+    print(str(e))
+    exit()
