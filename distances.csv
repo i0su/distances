@@ -1,4 +1,5 @@
 Mota;Galdera;Irudia;Zuzena;Oker1;Oker2;Jatorria;Esteka;;
+<<<<<<< HEAD
 Distantziak;Zer distantzia dago kotxez Muskizko udaletxea eta Torres del Ríoren artean?;ad2e2e37880843e68a7f727e66b60307.png;180km;206km;218km;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.323698,-3.125903%3B42.552777777,-2.269444444;;
 Distantziak;Zer distantzia dago kotxez Uskartze eta Udaletxe zaharraren artean?;1ef934e959d24213b85fbe70a1356ca4.png;165km;136km;183km;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.77444444,-1.09305556%3B42.5535,-2.5846;;
 Distantziak;Zer distantzia dago kotxez Artaxoa eta Sartzeren artean?;8fe02b42bcd94f3f921aa853bcf3113d.png;108km;140km;130km;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.591111111,-1.764444444%3B42.836111111,-1.098888888;;
@@ -14,3 +15,18 @@ Distantziak;Zer distantzia dago kotxez Ubideko udaletxea eta Etxebarriko udaletx
 Distantziak;Zer distantzia dago kotxez Goizueta eta Ibarrangeluko udaletxearen artean?;b07acf62481241d0a2fb449a2aaf867f.png;129km;161km;154km;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.171111111,-1.864166666%3B43.390215,-2.633802;;
 Distantziak;Zer distantzia dago kotxez Cabanillas eta Gatikako udaletxearen artean?;1b43e0d1e34645239dee7fd4e7960e91.png;261km;310km;293km;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.031388888,-1.526944444%3B43.353689,-2.883977;;
 Distantziak;Zer distantzia dago kotxez Leitza eta Iruraiz-Gaunako udaletxearen artean?;dbedf1fcb7e2443fb71c259db632cc29.png;91km;105km;111km;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.078888888,-1.914722222%3B42.822072,-2.495043;;
+=======
+Distantziak;Zer distantzia dago kotxez Olaberriko udaletxea eta Oibarren artean?;b78cd81fd97c46fdb348251adc2a15a8.png;122;136;156;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.02722222,-2.20305556%3B42.589444444,-1.359444444;;
+Distantziak;Zer distantzia dago kotxez Gardeko udaletxea eta Tolosako udaletxearen artean?;888dd55afe954bc2be5e5842af8438f1.png;153;182;179;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.78855278,-0.92419722%3B43.138092,-2.071918;;
+Distantziak;Zer distantzia dago kotxez Gares eta Villabonako udaletxearen artean?;3803f0e4e2ea4416886cbc6843006037.png;91;108;113;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.6717107,-1.8155291%3B43.189944,-2.052454;;
+Distantziak;Zer distantzia dago kotxez Mutriku eta Zarrakazteluren artean?;29c18fd4622548b6a09f5448f6648af0.png;187;146;238;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.307222,-2.385%3B42.38,-1.444444444;;
+Distantziak;Zer distantzia dago kotxez Ispasterko udaletxea eta Legorretako udaletxearen artean?;4e6954b4de004deb8fb7f21bc69ff16e.png;90;112;104;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.35917,-2.548351%3B43.085395,-2.148903;;
+Distantziak;Zer distantzia dago kotxez Villabonako udaletxea eta Derioko udaletxearen artean?;218e2a68994042cf927819750d014daf.png;104;82;123;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.189944,-2.052454%3B43.29134,-2.887177;;
+Distantziak;Zer distantzia dago kotxez Arratabe jauregia eta Astigarragako udaletxearen artean?;13092a941f3a417ba1ff112b738dc7cf.png;75;54;93;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.037411,-2.504323%3B43.279984304,-1.949216411;;
+Distantziak;Zer distantzia dago kotxez Genevilla eta Itsasondoko udaletxearen artean?;4d9347fbebcf4d359e89442e4cee8321.png;81;103;92;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.644722222,-2.391666666%3B43.067333,-2.165108;;
+Distantziak;Zer distantzia dago kotxez Leioako udaletxea eta Güeñesko udaletxearen artean?;e46844ebfa314cfebb65fdf9813778d3.png;28;21;35;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.327765,-2.986254%3B43.210452,-3.095387;;
+Distantziak;Zer distantzia dago kotxez Atarrabia eta Gordexolako udaletxearen artean?;06b5a79bc53f43bc944cf0d12cfa889b.png;173;214;219;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.8323,-1.60735%3B43.1805,-3.07412;;
+Distantziak;Zer distantzia dago kotxez Zuñiga eta Olaberriko udaletxearen artean?;b901c57ab0a54f0b8e550cfee20c72ec.png;76;99;94;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.6930374,-2.3004117%3B43.02722222,-2.20305556;;
+Distantziak;Zer distantzia dago kotxez Bilarko udaletxea eta Cárcarren artean?;91eeeeeb79d24697a6d1f630e823a57d.png;61;77;79;OpenStreetMap;https://www.openstreetmap.org/directions?route=42.569211,-2.544742%3B42.388888888,-1.97;;
+Distantziak;Zer distantzia dago kotxez Amezketako udaletxea eta Aramaioko udaletxearen artean?;5e774d73d5d34a06b63f61157ce2698c.png;62;74;76;OpenStreetMap;https://www.openstreetmap.org/directions?route=43.048619,-2.088298%3B43.052648,-2.564742;;
+>>>>>>> d9620617aaa1667423c17bc74dc2e91b7bfe1a1e
