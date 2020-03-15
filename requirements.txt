@@ -1,0 +1,14 @@
+certifi==2019.11.28
+chardet==3.0.4
+idna==2.9
+isodate==0.6.0
+Pillow==7.0.0
+progressbar2==3.50.0
+pyparsing==2.4.6
+python-utils==2.4.0
+rdflib==4.2.2
+requests==2.23.0
+six==1.14.0
+SPARQLWrapper==1.8.5
+staticmap==0.5.4
+urllib3==1.25.8
