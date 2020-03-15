@@ -2,7 +2,7 @@ import requests, random, time, csv, os, uuid, sys
 import progressbar
 from SPARQLWrapper import SPARQLWrapper, JSON
 from staticmap import StaticMap, CircleMarker
-#from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 def rev_lats(lats):
   tmp = lats.split(',')
@@ -86,12 +86,12 @@ def draw_map(point1, point2):
   #url_template = "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png" # alternatiba_1
   #url_template = "http://tile.memomaps.de/tilegen/{z}/{x}/{y}.png" # alternatiba_2
   
+  map_height = 600
   map_width = 600
-  map_height = 400
   z = 9
   fName = str(uuid.uuid4().hex)
 
-  m = StaticMap(map_width, map_height, url_template=url_template)
+  m = StaticMap(map_height, map_width, url_template=url_template)
 
   coords1 = point_to_coordinates(point1)
   coords2 = point_to_coordinates(point2)
@@ -253,14 +253,8 @@ def generate_n_questions(n):
       location1, location2 = get_different_points(bindings)
       distance, alternative_distance1, alternative_distance2, duration, alternative_duration1, alternative_duration2, url = get_distance_duration(location1, location2)
       fname = draw_map(location1[1], location2[1])
-      
-      write_response("d", location1[0], location2[0], fname, 
-        str(distance)+"km", str(alternative_distance1)+"km", 
-        str(alternative_distance2)+"km", url, distances_file)
-
-      write_response("t", location1[0], location2[0], fname,
-        duration, alternative_duration1, alternative_duration2,
-        url, durations_file)
+      write_response("d", location1[0], location2[0], fname, distance, alternative_distance1, alternative_distance2, url, distances_file)
+      write_response("t", location1[0], location2[0], fname, duration, alternative_duration1, alternative_duration2, url, durations_file)
 
   else:
     print("Errorea wikidata zerbitzariarekin konektazerakoan.")
